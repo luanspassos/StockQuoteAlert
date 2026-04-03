@@ -13,33 +13,50 @@ namespace StockQuoteAlert.Services
         {
             try
             {
-                string url = $"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}.SA&apikey=demo";
+                string url = $"https://brapi.dev/api/quote/{symbol.ToUpper()}";
 
                 var response = await _http.GetStringAsync(url);
                 var json = JsonDocument.Parse(response);
-
                 var root = json.RootElement;
 
-                if (root.TryGetProperty("Error Message", out _))
+                if (root.TryGetProperty("error", out var error))
                 {
-                    Console.WriteLine("Erro: Limite da API ou simbolo invalido");
+                    Console.WriteLine($"Erro da API: {error.GetString()}");
                     return null;
                 }
 
-                var globalQuote = root.GetProperty("Global Quote");
+                var results = root.GetProperty("results");
 
-                if (!globalQuote.TryGetProperty("05. price", out var priceElement))
+                if (results.GetArrayLength() == 0)
                 {
-                    Console.WriteLine($"Simbolo {symbol} nao encontrado");
+                    Console.WriteLine($"Símbolo {symbol} não encontrado");
                     return null;
                 }
 
-                string priceStr = priceElement.GetString();
-                return double.Parse(priceStr, System.Globalization.CultureInfo.InvariantCulture);
+                var firstStock = results[0];
+
+                if (!firstStock.TryGetProperty("regularMarketPrice", out var priceElement))
+                {
+                    Console.WriteLine($"Preço não encontrado para {symbol}");
+                    return null;
+                }
+
+                double price = priceElement.GetDouble();
+                return price;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"Erro de rede: {ex.Message}");
+                return null;
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"Erro ao processar JSON: {ex.Message}");
+                return null;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erro na API: {ex.Message}");
+                Console.WriteLine($"Erro inesperado: {ex.Message}");
                 return null;
             }
         }

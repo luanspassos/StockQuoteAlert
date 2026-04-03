@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using StockQuoteAlert.Services;
+using System.Globalization;
 
 var config = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -24,8 +25,8 @@ if (args.Length < 3)
 }
 
 string simbolo = args[0];
-double precoVenda = double.Parse(args[1]);
-double precoCompra = double.Parse(args[2]);
+double precoVenda = double.Parse(args[1], CultureInfo.InvariantCulture);
+double precoCompra = double.Parse(args[2], CultureInfo.InvariantCulture);
 
 if (string.IsNullOrWhiteSpace(simbolo))
 {
