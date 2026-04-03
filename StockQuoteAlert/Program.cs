@@ -67,26 +67,69 @@ await Executar();
 async Task Executar()
 {
     var quoteService = new QuoteService();
+    var emailService = new EmailService(smtpHost, smtpPort, smtpUsuario, smtpSenha, smtpSsl);
 
-    Console.WriteLine($"Buscando cotacao de {simbolo}...");
-    double? preco = await quoteService.GetPrice(simbolo);
+    string estado = "normal";
 
-    if (preco.HasValue)
+    while (true)
     {
-        Console.WriteLine($"Preco atual: R$ {preco.Value:F2}");
+        try
+        {
+            Console.WriteLine($"Buscando cotacao de {simbolo}...");
+            double? preco = await quoteService.GetPrice(simbolo);
 
-        if (preco.Value > precoVenda)
-            Console.WriteLine(">>> ACIMA do preco de VENDA");
-        else if (preco.Value < precoCompra)
-            Console.WriteLine(">>> ABAIXO do preco de COMPRA");
-        else
-            Console.WriteLine(">>> Dentro da faixa normal");
-    }
-    else
-    {
-        Console.WriteLine("Erro ao obter cotacao");
-    }
+            if (!preco.HasValue)
+            {
+                Console.WriteLine("Erro ao obter cotacao, tentando novamente...");
+                await Task.Delay(intervalo * 1000);
+                continue;
+            }
 
-    Console.WriteLine("\nPressione qualquer tecla para sair...");
-    Console.ReadKey();
+            Console.WriteLine($"Preco atual: R$ {preco.Value:F2}");
+
+            if (preco.Value > precoVenda && estado != "acima")
+            {
+                estado = "acima";
+                Console.WriteLine(">>> ACIMA do preco de VENDA - Enviando email...");
+
+                string assunto = $"[ALERTA] {simbolo} - VENDER";
+                string corpo = $"{simbolo} atingiu R$ {preco.Value:F2}\n" +
+                               $"Acima do preco de venda: R$ {precoVenda:F2}\n" +
+                               $"Sugestao: VENDER\n" +
+                               $"Hora: {DateTime.Now:HH:mm:ss}";
+
+                emailService.Send(emailDestino, assunto, corpo);
+                Console.WriteLine(">>> Email de VENDA enviado com sucesso!");
+            }
+            else if (preco.Value < precoCompra && estado != "abaixo")
+            {
+                estado = "abaixo";
+                Console.WriteLine(">>> ABAIXO do preco de COMPRA - Enviando email...");
+
+                string assunto = $"[ALERTA] {simbolo} - COMPRAR";
+                string corpo = $"{simbolo} atingiu R$ {preco.Value:F2}\n" +
+                               $"Abaixo do preco de compra: R$ {precoCompra:F2}\n" +
+                               $"Sugestao: COMPRAR\n" +
+                               $"Hora: {DateTime.Now:HH:mm:ss}";
+
+                emailService.Send(emailDestino, assunto, corpo);
+                Console.WriteLine(">>> Email de COMPRA enviado com sucesso!");
+            }
+            else if (preco.Value <= precoVenda && preco.Value >= precoCompra)
+            {
+                if (estado != "normal")
+                {
+                    Console.WriteLine(">>> Preco voltou a faixa normal");
+                    estado = "normal";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro no monitoramento: {ex.Message}");
+        }
+
+        Console.WriteLine($"Aguardando {intervalo} segundos para proxima verificacao...\n");
+        await Task.Delay(intervalo * 1000);
+    }
 }
