@@ -15,13 +15,13 @@ Para evitar múltiplos alertas repetidos, o sistema só envia um novo e-mail qua
 
 ## Tecnologias utilizadas
 
-- C# (.NET 8)
+- C# (.NET 10)
 - HTTP Client (consumo de API)
 - SMTP (envio de e-mail)
 
 ## Requisitos
 
-- .NET 8 ou superior
+- .NET 10 SDK ou superior
 - Conta Gmail (ou outro SMTP)
 
 ## Configuração

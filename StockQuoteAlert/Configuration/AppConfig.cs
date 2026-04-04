@@ -104,14 +104,14 @@ public class AppConfig
             return false;
         }
 
-        if (!double.TryParse(args[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double sellPrice))
+        if (!double.TryParse(args[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double sellPrice))
         {
             error = $"Preço de venda inválido: '{args[1]}'. Use ponto como separador decimal (ex: 22.67)";
             return false;
         }
         SellPrice = sellPrice;
 
-        if (!double.TryParse(args[2], NumberStyles.Any, CultureInfo.InvariantCulture, out double buyPrice))
+        if (!double.TryParse(args[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double buyPrice))
         {
             error = $"Preço de compra inválido: '{args[2]}'. Use ponto como separador decimal (ex: 22.59)";
             return false;
