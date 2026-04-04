@@ -4,61 +4,61 @@ namespace StockQuoteAlert.Services;
 
 public class MonitorService
 {
-    public async Task Executar(AppConfig config)
+    public async Task Run(AppConfig config)
     {
         var quoteService = new QuoteService();
-        var emailService = new EmailService(config.SmtpHost, config.SmtpPort, config.SmtpUsuario, config.SmtpSenha, config.SmtpSsl);
-        string estado = "normal";
+        var emailService = new EmailService(config.SmtpHost, config.SmtpPort, config.SmtpUser, config.SmtpPassword, config.SmtpSsl);
+        string state = "normal";
 
         while (true)
         {
             try
             {
-                Console.WriteLine($"Buscando cotacao de {config.Simbolo}...");
-                double? preco = await quoteService.GetPrice(config.Simbolo);
+                Console.WriteLine($"Buscando cotacao de {config.Symbol}...");
+                double? price = await quoteService.GetPrice(config.Symbol);
 
-                if (!preco.HasValue)
+                if (!price.HasValue)
                 {
                     Console.WriteLine("Erro ao obter cotacao, tentando novamente...");
-                    await Task.Delay(config.IntervaloSegundos * 1000);
+                    await Task.Delay(config.IntervalSeconds * 1000);
                     continue;
                 }
 
-                Console.WriteLine($"Preco atual: R$ {preco.Value:F2}");
+                Console.WriteLine($"Preco atual: R$ {price.Value:F2}");
 
-                if (preco.Value > config.PrecoVenda && estado != "acima")
+                if (price.Value > config.SellPrice && state != "acima")
                 {
-                    estado = "acima";
                     Console.WriteLine(">>> ACIMA do preco de VENDA - Enviando email...");
 
-                    string assunto = $"[ALERTA] {config.Simbolo} - VENDER";
-                    string corpo = $"{config.Simbolo} atingiu R$ {preco.Value:F2}\n" +
-                                   $"Acima do preco de venda: R$ {config.PrecoVenda:F2}\n" +
+                    string subject = $"[ALERTA] {config.Symbol} - VENDER";
+                    string body = $"{config.Symbol} atingiu R$ {price.Value:F2}\n" +
+                                   $"Acima do preco de venda: R$ {config.SellPrice:F2}\n" +
                                    $"Sugestao: VENDER\n" +
                                    $"Hora: {DateTime.Now:HH:mm:ss}";
 
-                    emailService.Send(config.EmailDestino, assunto, corpo);
+                    emailService.Send(config.DestinationEmail, subject, body);
                     Console.WriteLine(">>> Email de VENDA enviado com sucesso!");
+                    state = "acima";
                 }
-                else if (preco.Value < config.PrecoCompra && estado != "abaixo")
+                else if (price.Value < config.BuyPrice && state != "abaixo")
                 {
-                    estado = "abaixo";
                     Console.WriteLine(">>> ABAIXO do preco de COMPRA - Enviando email...");
-                    string assunto = $"[ALERTA] {config.Simbolo} - COMPRAR";
-                    string corpo = $"{config.Simbolo} atingiu R$ {preco.Value:F2}\n" +
-                                   $"Abaixo do preco de compra: R$ {config.PrecoCompra:F2}\n" +
+                    string assunto = $"[ALERTA] {config.Symbol} - COMPRAR";
+                    string corpo = $"{config.Symbol} atingiu R$ {price.Value:F2}\n" +
+                                   $"Abaixo do preco de compra: R$ {config.BuyPrice:F2}\n" +
                                    $"Sugestao: COMPRAR\n" +
                                    $"Hora: {DateTime.Now:HH:mm:ss}";
 
-                    emailService.Send(config.EmailDestino, assunto, corpo);
+                    emailService.Send(config.DestinationEmail, assunto, corpo);
                     Console.WriteLine(">>> Email de COMPRA enviado com sucesso!");
+                    state = "abaixo";
                 }
-                else if (preco.Value <= config.PrecoVenda && preco.Value >= config.PrecoCompra)
+                else if (price.Value <= config.SellPrice && price.Value >= config.BuyPrice)
                 {
-                    if (estado != "normal")
+                    if (state != "normal")
                     {
                         Console.WriteLine(">>> Preco voltou a faixa normal");
-                        estado = "normal";
+                        state = "normal";
                     }
                 }
             }
@@ -67,8 +67,8 @@ public class MonitorService
                 Console.WriteLine($"Erro: {ex.Message}");
             }
 
-            Console.WriteLine($"Aguardando {config.IntervaloSegundos} segundos para proxima verificacao...\n");
-            await Task.Delay(config.IntervaloSegundos * 1000);
+            Console.WriteLine($"Aguardando {config.IntervalSeconds} segundos para proxima verificacao...\n");
+            await Task.Delay(config.IntervalSeconds * 1000);
         }
     }
 }

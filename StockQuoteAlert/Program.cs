@@ -6,20 +6,20 @@ Console.WriteLine("Monitor de cotações B3 com alertas por e-mail\n");
 
 var config = new AppConfig();
 
-if (!config.Carregar(args, out string erro))
+if (!config.Load(args, out string error))
 {
-    Console.WriteLine($"ERRO: {erro}");
+    Console.WriteLine($"ERRO: {error}");
     return;
 }
 
-Console.WriteLine($"Ativo: {config.Simbolo}");
-Console.WriteLine($"Venda acima: R$ {config.PrecoVenda:F2}");
-Console.WriteLine($"Compra abaixo: R$ {config.PrecoCompra:F2}");
-Console.WriteLine($"Email: {config.EmailDestino}");
-Console.WriteLine($"Intervalo: {config.IntervaloSegundos}s\n");
+Console.WriteLine($"Ativo: {config.Symbol}");
+Console.WriteLine($"Venda acima: R$ {config.SellPrice:F2}");
+Console.WriteLine($"Compra abaixo: R$ {config.BuyPrice:F2}");
+Console.WriteLine($"Email: {config.DestinationEmail}");
+Console.WriteLine($"Intervalo: {config.IntervalSeconds}s\n");
 
 Console.WriteLine("Iniciando monitoramento...\n");
 
 var monitorService = new MonitorService();
 
-await monitorService.Executar(config);
+await monitorService.Run(config);

@@ -53,7 +53,7 @@ entre na pasta do projeto com:
 ```bash
 cd StockQuoteAlert
 ```
-Depois, execute em PS C:\Users\User\source\repos\StockQuoteAlert>:
+Depois, execute em PS C:\Users\User\source\repos\StockQuoteAl\StockQuoteAlertert>:
 
 ```bash
 dotnet run -- <ATIVO> <PRECO_VENDA> <PRECO_COMPRA>
